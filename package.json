@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "prerun": "echo \"\\\"$(date +'%Y.%m.%d-%H:%M:%S')\\\"\" > client/src/version.json",
-    "postbuild": "cp client/src/robots.txt ./dist && cp -R client/src/assets/icons dist/icons && cp client/src/version.json dist/latest.json",
+    "postbuild": "cp client/src/robots.txt ./dist && cp client/src/version.json dist/latest.json",
     "dev": "npm run prerun && vite-node server/index.ts",
     "start": "NODE_ENV=production vite-node server/index.ts",
     "build": "npm run prerun && rm -rf dist && vite build",

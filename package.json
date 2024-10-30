@@ -1,0 +1,47 @@
+{
+  "name": "printer-farm",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "prerun": "echo \"\\\"$(date +'%Y.%m.%d-%H:%M:%S')\\\"\" > client/src/version.json",
+    "postbuild": "cp client/src/robots.txt ./dist && cp -R client/src/assets/icons dist/icons && cp client/src/version.json dist/latest.json",
+    "dev": "npm run prerun && vite-node server/index.ts",
+    "start": "NODE_ENV=production vite-node server/index.ts",
+    "build": "npm run prerun && rm -rf dist && vite build",
+    "lint": "tsc && eslint --ext .ts,.tsx server client"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.1",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/express-http-proxy": "^1.6.6",
+    "@types/http-proxy": "^1.17.15",
+    "@types/humanize-duration": "^3.27.4",
+    "@types/lodash": "^4.17.12",
+    "@types/node": "^20.8.0",
+    "eslint": "^8.50.0",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "npm-run-all": "^4.1.5",
+    "tsx": "^3.12.3",
+    "typescript": "^4.9.3",
+    "vite-node": "^1.4.0",
+    "vite-plugin-html": "^3.2.2",
+    "vite-tsconfig-paths": "^4.3.2"
+  },
+  "dependencies": {
+    "classnames": "^2.5.1",
+    "cors": "^2.8.5",
+    "express": "^4.19.1",
+    "express-http-proxy": "^2.1.1",
+    "home-assistant-js-websocket": "^9.4.0",
+    "http-proxy": "^1.18.1",
+    "humanize-duration": "^3.32.1",
+    "lodash": "^4.17.21",
+    "node-fetch": "^3.3.2",
+    "preact": "^10.24.3",
+    "rpc-websockets": "^9.0.4",
+    "vite-express": "^0.19.0",
+    "wouter": "^3.1.0"
+  }
+}

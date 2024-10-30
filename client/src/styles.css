@@ -1,0 +1,72 @@
+:root {
+  --bulma-radius-small: 10px;
+  --bulma-radius: 12px;
+  --page-background: #f5f7fa;
+
+  --bulma-primary-h: 337deg;
+  --bulma-primary-s: 85%;
+  --bulma-primary-l: 73%;
+
+  --bulma-link-h: 254deg;
+  --bulma-link-s: 73%;
+  --bulma-link-l: 70%;
+
+  --bulma-info-h: 171deg;
+  --bulma-info-s: 82%;
+  --bulma-info-l: 65%;
+
+  --bulma-success-h: 122deg;
+  --bulma-success-s: 77%;
+  --bulma-success-l: 55%;
+
+  --bulma-warning-h: 25deg;
+  --bulma-warning-s: 82%;
+  --bulma-warning-l: 79%;
+
+  --bulma-danger-h: 2deg;
+  --bulma-danger-s: 86%;
+  --bulma-danger-l: 58%;
+}
+
+html,
+body {
+  min-height: 100vh;
+}
+
+body {
+  background-color: var(--page-background);
+}
+
+#app {
+  padding: 16px;
+  font-family: sans-serif;
+}
+
+.tag {
+  font-weight: bold;
+  color: white;
+}
+
+.progress {
+  border: 1px solid currentColor;
+}
+
+.progress:not(:last-child) {
+  margin-bottom: 0;
+}
+
+.job-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 30px;
+}
+
+.job-controls > *,
+.job-controls > .progress {
+  height: 100%;
+}
+
+.table tr td:first-child {
+  font-weight: bold;
+}

@@ -7,6 +7,9 @@ export interface PrinterData {
   };
   klippy: "ready" | "disconnected" | "shutdown";
   moonraker: "connected" | "disconnected";
+  toolhead?: {
+    estimated_print_time: number;
+  };
   print_stats?: {
     filename: string;
     total_duration: number;
@@ -39,6 +42,10 @@ export interface PrinterData {
     temperature: number;
     target: number;
   };
+  virtual_sdcard?: {
+    file_position: number;
+    progress: number;
+  };
 }
 
 export interface FileMetadata {
@@ -70,6 +77,19 @@ interface Thumbnail {
 
 export interface PrintJob {
   filename: string;
+  thumbnail: string | null;
   progress: number;
-  print_duration: number;
+  printDuration: number;
+  totalDuration: number;
+  slicerLeft: number;
+  fileLeft: number;
+  actualLeft: number;
+  eta: number;
+}
+
+export interface PrintJobDetails {
+  metadata: FileMetadata;
+  status?: string;
+  total_duration?: number;
+  print_duration?: number;
 }

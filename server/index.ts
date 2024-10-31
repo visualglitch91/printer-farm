@@ -49,8 +49,8 @@ wsServer.register("get_printers", () => {
   return mapValues(printers, (it) => it.getData());
 });
 
-wsServer.register("get_current_job_metadata", ({ printer }) => {
-  return getPrinter(printer).getCurrentJobMetadata();
+wsServer.register("get_current_job", ({ printer }) => {
+  return getPrinter(printer).getCurrentJob();
 });
 
 wsServer.register("pause_print", ({ printer }) => {

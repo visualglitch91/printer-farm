@@ -1,10 +1,13 @@
-import { orderBy } from "lodash";
 import { CSSProperties } from "preact/compat";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { Client as WSClient } from "rpc-websockets";
 import { Button, Flex, Badge, Stack, Title, Paper } from "@mantine/core";
-import { FileMetadata, PrinterData, PrintJob } from "./utils/types";
-import formatDuration from "./utils/formatDuration";
+import { PrinterData, PrintJobDetails } from "./utils/types";
+import {
+  formatCounterSeconds,
+  formatAbsoluteDateTime,
+} from "./utils/formatTime";
+import buildPrintJob from "./utils/buildPrintJob";
 import { InfoTable } from "./InfoTable";
 import TempCell from "./TempCell";
 import { JobControls } from "./JobControls";
@@ -35,25 +38,17 @@ export function Printer({ data, ws }: { data: PrinterData; ws: WSClient }) {
     data.print_stats?.state ||
     (data.moonraker === "connected" ? "klippy_offline" : "printer_offline");
 
+  const [details, setDetails] = useState<PrintJobDetails>();
+  const [restarting, setRestarting] = useState(false);
+  const stateRef = useRef(state);
+
+  const { extruder, heater_bed } = data;
+  const job = data.print_stats?.filename ? buildPrintJob(data, details) : null;
+  const stateBadge = stateBadgeMap[state];
   const offline = state === "klippy_offline" || state === "printer_offline";
   const printing = state === "printing";
   const paused = state === "paused";
   const printingOrPaused = printing || paused;
-
-  const job: PrintJob | null = data.print_stats?.filename
-    ? {
-        filename: data.print_stats.filename,
-        progress: (data.display_status?.progress || 0) * 100,
-        print_duration: data.print_stats.print_duration || 0,
-      }
-    : null;
-
-  const [metadata, setMetadata] = useState<FileMetadata | null>(null);
-  const [restarting, setRestarting] = useState(false);
-  const largerThumbnail = orderBy(metadata?.thumbnails, "size").pop();
-  const { extruder, heater_bed } = data;
-
-  const stateBadge = stateBadgeMap[state];
 
   const call = (method: string, params?: Record<string, any>) => {
     return ws.call(method, { ...params, printer: data.config.key });
@@ -80,18 +75,26 @@ export function Printer({ data, ws }: { data: PrinterData; ws: WSClient }) {
   };
 
   useEffect(() => {
-    const filename = job?.filename;
+    stateRef.current = state;
+  }, [state]);
 
-    setMetadata(null);
+  useEffect(() => {
+    const interval = window.setInterval(async () => {
+      const state = stateRef.current;
 
-    if (filename) {
-      call("get_current_job_metadata").then(
-        (data: any) => setMetadata(data),
-        console.error
-      );
-    }
+      if (["standby", "klippy_offline", "printer_offline"].includes(state)) {
+        setDetails(undefined);
+      } else {
+        call("get_current_job").then(
+          (data: any) => setDetails(data),
+          console.error
+        );
+      }
+    }, 1500);
+
+    return () => window.clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [job?.filename]);
+  }, []);
 
   useEffect(() => {
     if (!offline) {
@@ -137,37 +140,66 @@ export function Printer({ data, ws }: { data: PrinterData; ws: WSClient }) {
           </Button>
         ) : (
           <>
-            {largerThumbnail && (
-              <Paper style={{ overflow: "hidden" }}>
-                <img
-                  style={thumbnailStyle}
-                  src={largerThumbnail.relative_path.replace(
-                    ".thumbs/",
-                    `/printers/${data.config.key}/thumbnail/`
-                  )}
-                  alt="thumbnail"
-                />
-              </Paper>
-            )}
             {job && (
               <>
+                {job.thumbnail && (
+                  <Paper style={{ overflow: "hidden" }}>
+                    <img
+                      style={thumbnailStyle}
+                      src={job.thumbnail}
+                      alt="thumbnail"
+                    />
+                  </Paper>
+                )}
                 <JobControls
                   job={job}
                   state={state}
                   confirmAndCall={confirmAndCall}
                 />
                 <InfoTable
-                  data={[
-                    ["File", job.filename],
-                    [
-                      "Estimated",
-                      formatDuration((metadata?.estimated_time || 0) * 1000),
-                    ],
-                    [
-                      "Ellapsed",
-                      formatDuration((job.print_duration || 0) * 1000),
-                    ],
-                  ]}
+                  data={
+                    printing
+                      ? [
+                          ["File", job.filename],
+                          [
+                            "Remaining (actual)",
+                            formatCounterSeconds(job.actualLeft),
+                          ],
+                          [
+                            "Remaining (file)",
+                            formatCounterSeconds(job.fileLeft),
+                          ],
+                          [
+                            "Remaining (slicer)",
+                            formatCounterSeconds(job.slicerLeft),
+                          ],
+                          ["Elapsed", formatCounterSeconds(job.printDuration)],
+                          ["ETA", formatAbsoluteDateTime(job.eta)],
+                        ]
+                      : [
+                          ["File", job.filename],
+                          details?.metadata.estimated_time
+                            ? [
+                                "Slicer estimate",
+                                formatCounterSeconds(
+                                  details?.metadata.estimated_time
+                                ),
+                              ]
+                            : null,
+                          details?.print_duration
+                            ? [
+                                "Print duration",
+                                formatCounterSeconds(details.print_duration),
+                              ]
+                            : null,
+                          details?.total_duration
+                            ? [
+                                "Total duration",
+                                formatCounterSeconds(details.total_duration),
+                              ]
+                            : null,
+                        ]
+                  }
                 />
               </>
             )}

@@ -147,6 +147,8 @@ export class Printer extends EventEmitter {
         objects: {
           print_stats: null,
           display_status: null,
+          virtual_sdcard: ["file_position", "progress"],
+          toolhead: ["estimated_print_time"],
           extruder: ["temperature", "target"],
           heater_bed: ["temperature", "target"],
         },
@@ -166,14 +168,10 @@ export class Printer extends EventEmitter {
     };
   }
 
-  async getCurrentJobMetadata() {
-    const filename = this._state?.print_stats?.filename;
-
-    if (!filename) {
-      return null;
-    }
-
-    return this._ws.call("server.files.metadata", { filename });
+  async getCurrentJob() {
+    return await this._ws
+      .call("server.history.list", { limit: 1 })
+      .then((res: any) => res.jobs.pop());
   }
 
   pause() {

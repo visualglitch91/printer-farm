@@ -1,5 +1,6 @@
 import { orderBy } from "lodash";
 import { PrintJob, PrintJobDetails, PrinterData } from "./types";
+import getLayerInfo from "./getLayerInfo";
 
 function getFileRelativePrintProgress(
   virtualSDCard: PrinterData["virtual_sdcard"] | undefined,
@@ -91,5 +92,6 @@ export default function buildPrintJob(
     fileLeft,
     actualLeft,
     eta,
+    layer: getLayerInfo(data, jobDetails),
   };
 }

@@ -148,6 +148,7 @@ export class Printer extends EventEmitter {
           print_stats: null,
           display_status: null,
           virtual_sdcard: ["file_position", "progress"],
+          gcode_move: ["gcode_position"],
           toolhead: ["estimated_print_time"],
           extruder: ["temperature", "target"],
           heater_bed: ["temperature", "target"],

@@ -41,14 +41,23 @@ export function formatCounterSeconds(seconds: number | string) {
   return isNeg ? "-" + r : r;
 }
 
-function formatDateTime(value: number | string | Date) {
+function formatDateTime(value: number | string | Date): string {
   const date = new Date(value);
-  return date.toLocaleDateString();
+
+  return date.toLocaleDateString(undefined, {
+    month: "2-digit",
+    day: "2-digit",
+  });
 }
 
-function formatTime(value: number | string | Date) {
+function formatTime(value: number | string | Date): string {
   const date = new Date(value);
-  return date.toLocaleTimeString();
+
+  return date.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 export function formatAbsoluteDateTime(value: number | string | Date) {

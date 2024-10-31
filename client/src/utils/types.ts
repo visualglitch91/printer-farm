@@ -46,6 +46,9 @@ export interface PrinterData {
     file_position: number;
     progress: number;
   };
+  gcode_move?: {
+    gcode_position: number[];
+  };
 }
 
 export interface FileMetadata {
@@ -85,6 +88,7 @@ export interface PrintJob {
   fileLeft: number;
   actualLeft: number;
   eta: number;
+  layer: string;
 }
 
 export interface PrintJobDetails {

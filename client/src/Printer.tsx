@@ -161,43 +161,58 @@ export function Printer({ data, ws }: { data: PrinterData; ws: WSClient }) {
                     printing
                       ? [
                           ["File", job.filename],
-                          [
-                            "Remaining (actual)",
-                            formatCounterSeconds(job.actualLeft),
-                          ],
+                          job.actualLeft
+                            ? [
+                                "Remaining (actual)",
+                                formatCounterSeconds(job.actualLeft),
+                              ]
+                            : null,
                           [
                             "Remaining (file)",
-                            formatCounterSeconds(job.fileLeft),
+                            job.fileLeft
+                              ? formatCounterSeconds(job.fileLeft)
+                              : "-",
                           ],
                           [
                             "Remaining (slicer)",
-                            formatCounterSeconds(job.slicerLeft),
+                            job.slicerLeft
+                              ? formatCounterSeconds(job.slicerLeft)
+                              : "-",
                           ],
-                          ["Elapsed", formatCounterSeconds(job.printDuration)],
-                          ["ETA", formatAbsoluteDateTime(job.eta)],
+                          [
+                            "Elapsed",
+                            job.printDuration
+                              ? formatCounterSeconds(job.printDuration)
+                              : "-",
+                          ],
+                          [
+                            "ETA",
+                            job.eta ? formatAbsoluteDateTime(job.eta) : "-",
+                          ],
+                          ["Layer", job.layer],
                         ]
                       : [
                           ["File", job.filename],
-                          details?.metadata.estimated_time
-                            ? [
-                                "Slicer estimate",
-                                formatCounterSeconds(
-                                  details?.metadata.estimated_time
-                                ),
-                              ]
-                            : null,
-                          details?.print_duration
-                            ? [
-                                "Print duration",
-                                formatCounterSeconds(details.print_duration),
-                              ]
-                            : null,
-                          details?.total_duration
-                            ? [
-                                "Total duration",
-                                formatCounterSeconds(details.total_duration),
-                              ]
-                            : null,
+                          [
+                            "Slicer estimate",
+                            details?.metadata.estimated_time
+                              ? formatCounterSeconds(
+                                  details.metadata.estimated_time
+                                )
+                              : "-",
+                          ],
+                          [
+                            "Print duration",
+                            details?.print_duration
+                              ? formatCounterSeconds(details.print_duration)
+                              : "-",
+                          ],
+                          [
+                            "Total duration",
+                            details?.total_duration
+                              ? formatCounterSeconds(details.total_duration)
+                              : "-",
+                          ],
                         ]
                   }
                 />

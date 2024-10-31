@@ -1,26 +1,24 @@
-import { useEffect, useState } from "preact/hooks";
-import { CSSProperties } from "preact/compat";
-import { Client as WSClient } from "rpc-websockets";
-import { FileMetadata, PrinterData, PrintJob } from "./utils/types";
-import { PaperTable } from "./PaperTable";
-import { Progress } from "./Progress";
-import IconButton from "./IconButton";
-import formatDuration from "./utils/formatDuration";
 import { orderBy } from "lodash";
+import { CSSProperties } from "preact/compat";
+import { useEffect, useState } from "preact/hooks";
+import { Client as WSClient } from "rpc-websockets";
+import { Button, Flex, Badge, Stack, Title, Paper } from "@mantine/core";
+import { FileMetadata, PrinterData, PrintJob } from "./utils/types";
+import formatDuration from "./utils/formatDuration";
+import { InfoTable } from "./InfoTable";
+import TempCell from "./TempCell";
+import { JobControls } from "./JobControls";
+import Macros from "./Macros";
 
-function parseTemperature(value: number | null | undefined) {
-  return typeof value === "number" ? `${Math.round(value * 10) / 10}°C` : "-";
-}
-
-const stateChipMap = {
-  standby: { label: "Standby", color: "dark" },
-  printing: { label: "Printing", color: "primary" },
-  paused: { label: "Paused", color: "warning" },
-  complete: { label: "Complete", color: "success" },
-  cancelled: { label: "Cancelled", color: "secondary" },
-  error: { label: "Error", color: "error" },
-  printer_offline: { label: "Printer Offline", color: "dark" },
-  klippy_offline: { label: "Klippy Offline", color: "dark" },
+const stateBadgeMap = {
+  standby: { label: "Standby", color: "gray" },
+  printing: { label: "Printing", color: "blue" },
+  paused: { label: "Paused", color: "yellow" },
+  complete: { label: "Complete", color: "green" },
+  cancelled: { label: "Cancelled", color: "orange" },
+  error: { label: "Error", color: "red" },
+  printer_offline: { label: "Printer Offline", color: "gray" },
+  klippy_offline: { label: "Klippy Offline", color: "gray" },
 } as const;
 
 const thumbnailStyle: CSSProperties = {
@@ -45,7 +43,7 @@ export function Printer({ data, ws }: { data: PrinterData; ws: WSClient }) {
   const job: PrintJob | null = data.print_stats?.filename
     ? {
         filename: data.print_stats.filename,
-        progress: data.display_status?.progress || 0,
+        progress: (data.display_status?.progress || 0) * 100,
         print_duration: data.print_stats.print_duration || 0,
       }
     : null;
@@ -55,7 +53,7 @@ export function Printer({ data, ws }: { data: PrinterData; ws: WSClient }) {
   const largerThumbnail = orderBy(metadata?.thumbnails, "size").pop();
   const { extruder, heater_bed } = data;
 
-  const stateChip = stateChipMap[state];
+  const stateBadge = stateBadgeMap[state];
 
   const call = (method: string, params?: Record<string, any>) => {
     return ws.call(method, { ...params, printer: data.config.key });
@@ -103,55 +101,44 @@ export function Printer({ data, ws }: { data: PrinterData; ws: WSClient }) {
 
   return (
     <div>
-      <div
-        className="is-flex is-flex-direction-row is-align-items-center mb-4 py-2"
-        style={{
-          top: 0,
-          zIndex: 2,
-          position: "sticky",
-          background: "var(--page-background)",
-        }}
+      <Flex
+        gap={8}
+        align="center"
+        justify="space-between"
+        bg="var(--page-background)"
+        mb={16}
+        style={{ top: 0, zIndex: 2, position: "sticky" }}
       >
-        <h1 className="title is-4 mb-0">{data.config.name}</h1>
-        <span
-          style={{ marginLeft: "auto" }}
-          className={`tag is-${stateChip.color}`}
-        >
-          {stateChip.label}
-        </span>
-      </div>
-      <div className="is-flex is-flex-direction-column" style={{ gap: 18 }}>
+        <Title order={3}>{data.config.name}</Title>
+        <Badge color={stateBadge.color}>{stateBadge.label}</Badge>
+      </Flex>
+      <Stack gap={18}>
         {state === "klippy_offline" ? (
-          <div style={{ textAlign: "center" }}>
-            <button
-              disabled={restarting}
-              className="button is-link is-fullwidth"
-              onClick={() => {
-                setRestarting(true);
-                call("firmware_restart");
-                call("klipper_restart");
-              }}
-            >
-              Restart klipper and firmware
-            </button>
-          </div>
+          <Button
+            disabled={restarting}
+            onClick={() => {
+              setRestarting(true);
+              call("firmware_restart");
+              call("klipper_restart");
+            }}
+          >
+            Restart klipper and firmware
+          </Button>
         ) : state === "printer_offline" ? (
-          <div style={{ textAlign: "center" }}>
-            <button
-              disabled={restarting}
-              className="button is-info is-fullwidth"
-              onClick={() => {
-                setRestarting(true);
-                call("turn_on");
-              }}
-            >
-              Turn on
-            </button>
-          </div>
+          <Button
+            disabled={restarting}
+            color="green"
+            onClick={() => {
+              setRestarting(true);
+              call("turn_on");
+            }}
+          >
+            Turn on
+          </Button>
         ) : (
           <>
             {largerThumbnail && (
-              <div className="box p-0 mb-0" style={{ overflow: "hidden" }}>
+              <Paper style={{ overflow: "hidden" }}>
                 <img
                   style={thumbnailStyle}
                   src={largerThumbnail.relative_path.replace(
@@ -160,141 +147,58 @@ export function Printer({ data, ws }: { data: PrinterData; ws: WSClient }) {
                   )}
                   alt="thumbnail"
                 />
-              </div>
+              </Paper>
             )}
             {job && (
               <>
-                <div className="job-controls">
-                  {printing && (
-                    <IconButton
-                      className="is-small is-info is-outlined"
-                      name="pause"
-                      onClick={() => {
-                        confirmAndCall(
-                          "Are you sure you want to pause the print?",
-                          "pause_print"
-                        );
-                      }}
-                    />
-                  )}
-                  {paused && (
-                    <IconButton
-                      className="is-small is-info is-outlined"
-                      name="play"
-                      onClick={() => {
-                        confirmAndCall(
-                          "Are you sure you want to resume the print?",
-                          "resume_print"
-                        );
-                      }}
-                    />
-                  )}
-                  {printingOrPaused && (
-                    <IconButton
-                      className="is-small is-info is-outlined"
-                      name="stop"
-                      onClick={() => {
-                        confirmAndCall(
-                          "Are you sure you want to cancel the print?",
-                          "cancel_print"
-                        );
-                      }}
-                    />
-                  )}
-                  <Progress color="info" value={job.progress} />
-                  <span
-                    className="tag is-info"
-                    style={{ fontWeight: "normal" }}
-                  >
-                    {Math.round(job.progress)}%
-                  </span>
-                </div>
-                <PaperTable>
-                  <tbody>
-                    <tr>
-                      <td>File</td>
-                      <td>{job.filename}</td>
-                    </tr>
-                    <tr>
-                      <td>Estimated</td>
-                      <td>
-                        {formatDuration((metadata?.estimated_time || 0) * 1000)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Ellapsed</td>
-                      <td>
-                        {formatDuration((job.print_duration || 0) * 1000)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </PaperTable>
+                <JobControls
+                  job={job}
+                  state={state}
+                  confirmAndCall={confirmAndCall}
+                />
+                <InfoTable
+                  data={[
+                    ["File", job.filename],
+                    [
+                      "Estimated",
+                      formatDuration((metadata?.estimated_time || 0) * 1000),
+                    ],
+                    [
+                      "Ellapsed",
+                      formatDuration((job.print_duration || 0) * 1000),
+                    ],
+                  ]}
+                />
               </>
             )}
-            <PaperTable>
-              <tbody>
-                <tr>
-                  <td>Tool</td>
-                  <td>
-                    <div
-                      className="is-flex is-align-items-center is-justify-content-flex-end"
-                      style={{ gap: 8 }}
-                    >
-                      {parseTemperature(extruder?.temperature)}
-                      {" › "}
-                      {parseTemperature(extruder?.target)}
-                      <IconButton
-                        className="is-small is-link is-outlined"
-                        name="edit"
-                        onClick={() => setTemperature("extruder")}
-                      />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Bed</td>
-                  <td>
-                    <div
-                      className="is-flex is-align-items-center is-justify-content-flex-end"
-                      style={{ gap: 8 }}
-                    >
-                      {parseTemperature(heater_bed?.temperature)}
-                      {" › "}
-                      {parseTemperature(heater_bed?.target)}
-                      <IconButton
-                        className="is-small is-link is-outlined"
-                        name="edit"
-                        onClick={() => setTemperature("heater_bed")}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </PaperTable>
+            <InfoTable
+              data={[
+                [
+                  "Tool",
+                  <TempCell
+                    current={extruder?.temperature || 0}
+                    target={extruder?.target || 0}
+                    onEdit={() => setTemperature("extruder")}
+                  />,
+                ],
+                [
+                  "Bed",
+                  <TempCell
+                    current={heater_bed?.temperature || 0}
+                    target={heater_bed?.target || 0}
+                    onEdit={() => setTemperature("heater_bed")}
+                  />,
+                ],
+              ]}
+            />
             {!printingOrPaused && (
-              <div>
-                <h3 className="title is-5">Macros</h3>
-                <div className="is-flex is-flex-wrap-wrap" style={{ gap: 8 }}>
-                  {data.config.macros.map((macro) => (
-                    <button
-                      key={macro}
-                      className="button is-primary is-small"
-                      onClick={() => {
-                        confirmAndCall(
-                          `Are you sure you want to run "${macro}"?`,
-                          "run_macro",
-                          { macro }
-                        );
-                      }}
-                    >
-                      {macro}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <Macros
+                macros={data.config.macros || []}
+                confirmAndCall={confirmAndCall}
+              />
             )}
-            <button
-              className="button is-danger is-outlined is-fullwidth"
+            <Button
+              color="red"
               onClick={() =>
                 confirmAndCall(
                   "Are you sure you want to stop the printer?",
@@ -303,9 +207,9 @@ export function Printer({ data, ws }: { data: PrinterData; ws: WSClient }) {
               }
             >
               Emergency stop
-            </button>
-            <button
-              className="button is-danger is-outlined is-fullwidth"
+            </Button>
+            <Button
+              color="red"
               onClick={() =>
                 confirmAndCall(
                   "Are you sure you want to turn off the printer?",
@@ -314,10 +218,10 @@ export function Printer({ data, ws }: { data: PrinterData; ws: WSClient }) {
               }
             >
               Turn off
-            </button>
+            </Button>
           </>
         )}
-      </div>
+      </Stack>
     </div>
   );
 }

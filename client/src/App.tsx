@@ -1,8 +1,23 @@
+import "@mantine/core/styles.css";
+
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { Client as WSClient } from "rpc-websockets";
+import { createTheme, MantineProvider, Paper, SimpleGrid } from "@mantine/core";
 import { Printer } from "./Printer";
 import { PrinterData } from "./utils/types";
 import "./styles.css";
+
+const theme = createTheme({
+  primaryColor: "pink",
+  defaultRadius: "lg",
+  components: {
+    Paper: {
+      defaultProps: {
+        withBorder: true,
+      },
+    },
+  },
+});
 
 export default function App() {
   const [state, setState] = useState<Record<string, PrinterData>>({});
@@ -31,13 +46,15 @@ export default function App() {
     return () => ws.close();
   }, [ws]);
 
+  const printers = Object.values(state);
+
   return (
-    <div className="columns">
-      {Object.values(state).map((it) => (
-        <div key={it.config.key} className="column">
-          <Printer ws={ws} data={it} />
-        </div>
-      ))}
-    </div>
+    <MantineProvider theme={theme} defaultColorScheme="auto">
+      <SimpleGrid cols={printers.length}>
+        {printers.map((it) => (
+          <Printer key={it.config.key} ws={ws} data={it} />
+        ))}
+      </SimpleGrid>
+    </MantineProvider>
   );
 }

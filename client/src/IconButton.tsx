@@ -1,18 +1,23 @@
-import classNames from "classnames";
+import { Button, ButtonProps } from "@mantine/core";
 import Icon from "./Icon";
 
 export default function IconButton({
   name,
-  className,
-  onClick,
-}: {
+  size = "xs",
+  ...props
+}: Omit<ButtonProps, "children"> & {
   name: string;
-  className?: string;
   onClick?: () => void;
 }) {
   return (
-    <button className={classNames("button", className)} onClick={onClick}>
+    <Button
+      {...props}
+      size={size}
+      p={0}
+      w="var(--button-height, var(--button-height-sm))"
+      radius="100%"
+    >
       <Icon name={name} className="is-small" />
-    </button>
+    </Button>
   );
 }

@@ -18,6 +18,7 @@ const formatDuration = humanizeDuration.humanizer({
       ms: () => "ms",
     },
   },
+  maxDecimalPoints: 0,
 });
 
 export default formatDuration;

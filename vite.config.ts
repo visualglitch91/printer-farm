@@ -17,4 +17,7 @@ export default defineConfig({
     preact(),
     createHtmlPlugin({ minify: true, inject: { data: { baseUrl } } }),
   ],
+  css: {
+    postcss: "./postcss.config.js",
+  },
 });

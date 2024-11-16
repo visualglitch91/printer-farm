@@ -4,7 +4,7 @@ export default function Macros({
   macros,
   confirmAndCall,
 }: {
-  macros: string[];
+  macros: [string, string][];
   confirmAndCall: (
     message: string,
     method: string,
@@ -15,20 +15,20 @@ export default function Macros({
     <div>
       <Title order={5}>Macros</Title>
       <Flex wrap="wrap" gap={8}>
-        {macros.map((macro) => (
+        {macros.map(([macro, label]) => (
           <Button
             key={macro}
             size="xs"
             color="purple"
             onClick={() => {
               confirmAndCall(
-                `Are you sure you want to run "${macro}"?`,
+                `Are you sure you want to run "${label}"?`,
                 "run_macro",
                 { macro }
               );
             }}
           >
-            {macro}
+            {label}
           </Button>
         ))}
       </Flex>

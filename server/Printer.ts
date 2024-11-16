@@ -9,7 +9,7 @@ interface PrinterConfig {
   name: string;
   host: string;
   entity_id: string;
-  macros: string[];
+  macros: [string, string][];
 }
 
 type MoonrakerStatus = "disconnected" | "connected";
@@ -220,7 +220,9 @@ export class Printer extends EventEmitter {
   }
 
   runMacro(macro: string) {
-    if (!this._config.macros.includes(macro)) {
+    const macros = this._config.macros.map((it) => it[0]);
+
+    if (!macros.includes(macro)) {
       throw new Error("Invalid macro");
     }
 

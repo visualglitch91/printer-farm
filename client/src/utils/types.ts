@@ -3,7 +3,7 @@ export interface PrinterData {
     key: string;
     name: string;
     host: string;
-    macros: string[];
+    macros: [string, string][];
   };
   klippy: "ready" | "disconnected" | "shutdown";
   moonraker: "connected" | "disconnected";
